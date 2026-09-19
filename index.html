@@ -748,6 +748,10 @@ function moisturePage(){
     <div class="mo-focus-section">
       <div class="mo-select-row"><button class="mo-add-stack-btn" onclick="openAddMoistureStackModal()">➕ ADD NEW STACK</button></div>
       <div class="mo-stack-meta" id="moStackMeta">Open an Under Issue Stack to view Receipt Date, Crop Year, Commodity & RMC</div>
+      <select id="mStack" class="mo-hidden-stack-select" aria-label="Selected moisture stack">
+        <option value="">Select Stack</option>
+        ${opts}
+      </select>
     </div>
 
     <div class="mo-focus-section mo-stack-details">
@@ -838,7 +842,7 @@ function renderMoistureStackStatus(){
   const item=(r,cls,label)=>{const rice=isRice(r);const st=stack(r);const safe=String(st).replaceAll("\\","\\\\").replaceAll("'","\\'");return `<div class="mo-stack-item ${cls} ${rice?'rice-stack':'wheat-stack'}" role="button" tabindex="0" onclick="selectMoistureStack('${safe}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();selectMoistureStack('${safe}')}\"><span><b>${esc(st)}</b> · Shed ${esc(shed(r))} · <strong>${esc(commodity(r))}</strong></span><span class="mo-stack-actions"><button type="button" class="mo-select-btn" onclick="event.stopPropagation();selectMoistureStack('${safe}')">SELECT</button><button type="button" class="mo-delete-btn" onclick="event.stopPropagation();deleteMoistureStackWithPin('${safe}')">🗑 DELETE</button></span></div>`};
   box.innerHTML=`<div class="mo-status-card mo-pending"><div class="mo-status-head"><span>🟠 UNDER ISSUE STACK</span><span class="mo-status-count">${pending.length}</span></div><div class="smallmuted">Moisture issue wale stacks — Wheat aur Rice alag colour me</div><div class="mo-stack-list">${pending.length?pending.map(r=>item(r,'mo-pending','Pending')).join(''):'<div class="empty">No pending stack.</div>'}</div></div>`;
 }
-function selectMoistureStack(st){const key=String(st||'').trim();if(!key)return false;const r=rows.find(x=>String(stack(x)).trim()===key);if(!r){return false}localStorage.setItem('shambhuSelectedMoistureStack',key);const sel=$('mStack');if(sel)sel.value=key;loadMoistureStack();renderMoistureStackStatus();requestAnimationFrame(()=>{const target=document.querySelector('.saved-moisture-focus');if(target)target.scrollIntoView({behavior:'smooth',block:'start'});});return true}
+function selectMoistureStack(st){const key=String(st||'').trim();if(!key)return;const r=rows.find(x=>String(stack(x))===key);if(!r){alert('Selected stack Master Sheet me nahi mila.');return}localStorage.setItem('shambhuSelectedMoistureStack',key);const sel=$('mStack');if(sel)sel.value=key;loadMoistureStack();renderMoistureStackStatus();requestAnimationFrame(()=>{const target=document.querySelector('.saved-moisture-focus');if(target)target.scrollIntoView({behavior:'smooth',block:'start'});});}
 function openUnderIssueStack(st){
   const r=rows.find(x=>stack(x)===st);
   if(!r){alert('Selected stack Master Sheet me nahi mila.');return}
@@ -1254,6 +1258,7 @@ body.moisture-active .content{padding-top:8px}
 </script>
 
 <style id="moisture-final-reliable-fix">
+.mo-hidden-stack-select{position:absolute!important;width:1px!important;height:1px!important;opacity:0!important;pointer-events:none!important;overflow:hidden!important}
 /* Reliable stack selection + compact controls + keyboard-safe moisture popup */
 .mo-select-btn,.mo-delete-btn{font-size:8px!important;padding:3px 5px!important;line-height:1!important}
 #modal.mo-moisture-modal{align-items:flex-start!important;justify-content:center!important;padding:6px 8px max(8px,env(safe-area-inset-bottom))!important;overflow-y:auto!important}
@@ -1269,26 +1274,17 @@ body.moisture-active .content{padding-top:8px}
 </style>
 
 <script>
-/* FINAL MOBILE TOUCH FIX: the whole Under Issue Stack row is tappable. */
-document.addEventListener('pointerup',function(e){
-  const row=e.target.closest && e.target.closest('.mo-stack-item');
-  if(!row)return;
-  const st=row.getAttribute('data-mo-stack')||'';
-  if(e.target.closest('.mo-delete-btn')){e.stopPropagation();deleteMoistureStackWithPin(st);return;}
-  if(e.target.closest('.mo-select-btn') || e.target===row || row.contains(e.target)){e.stopPropagation();selectMoistureStack(st);}
-},true);
-document.addEventListener('keydown',function(e){
-  const row=e.target.closest && e.target.closest('.mo-stack-item');
-  if(!row || (e.key!=='Enter' && e.key!==' '))return;
-  e.preventDefault();selectMoistureStack(row.getAttribute('data-mo-stack')||'');
-},true);
 document.addEventListener('DOMContentLoaded',function(){
   const pin=document.getElementById('sitePin');
   if(pin){
-    pin.setAttribute('inputmode','numeric'); pin.setAttribute('type','tel'); pin.setAttribute('autocomplete','one-time-code');
-    const focusPin=()=>{pin.focus({preventScroll:true});};
-    pin.addEventListener('click',focusPin); pin.addEventListener('touchend',()=>setTimeout(focusPin,0),{passive:true}); pin.addEventListener('touchstart',focusPin,{passive:true});
-    setTimeout(()=>{if(document.getElementById('pinScreen')?.style.display!=='none') focusPin();},120);
+    pin.type='tel'; pin.inputMode='numeric'; pin.pattern='[0-9]*'; pin.autocomplete='one-time-code'; pin.enterKeyHint='done'; pin.maxLength=6;
+    const focusPin=()=>{ if(document.getElementById('pinScreen')?.style.display!=='none'){ try{pin.focus({preventScroll:true}); pin.setSelectionRange(pin.value.length,pin.value.length);}catch(e){pin.focus();} } };
+    pin.addEventListener('click',focusPin);
+    pin.addEventListener('pointerdown',()=>{pin.inputMode='numeric';pin.type='tel';},{passive:true});
+    pin.addEventListener('touchend',()=>setTimeout(focusPin,0),{passive:true});
+    requestAnimationFrame(focusPin);
+    setTimeout(focusPin,120);
+    setTimeout(focusPin,500);
   }
 });
 </script>
