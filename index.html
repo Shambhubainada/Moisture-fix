@@ -206,7 +206,7 @@
 .notes-grid{display:grid;grid-template-columns:1.1fr .9fr;gap:12px}.note-form{display:grid;gap:9px}.note-form input,.note-form textarea{border:1px solid #cbd9d3;border-radius:8px;padding:10px}.note-form textarea{min-height:90px;resize:vertical}.note-item{border:1px solid var(--line);border-radius:9px;padding:10px;background:#fff;display:flex;justify-content:space-between;gap:10px;align-items:center}.note-item.overdue{border-left:5px solid #d92d3b}.note-item.today{border-left:5px solid #e39a18}.fn-grid{display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px}.fn-card{border:1px solid var(--line);border-radius:10px;padding:12px;background:#fff}.fn-card.done{background:#eefaf3;border-color:#8bc7a8}.fn-head{display:flex;justify-content:space-between;align-items:center;gap:8px}.fn-card button{border:0;background:#0a7a4b;color:#fff;border-radius:8px;padding:8px 12px;font-weight:900}.fn-card button.pending{background:#e39a18}.history-downloads{display:flex;gap:8px;flex-wrap:wrap;margin:8px 0 12px}.history-downloads button{border:0;border-radius:8px;padding:9px 12px;color:#fff;font-weight:900}.history-downloads .w{background:#0a7a4b}.history-downloads .r{background:#b66a00}.history-downloads .a{background:#2d73c8}
 @media(max-width:700px){.notes-grid,.fn-grid{grid-template-columns:1fr}.history-downloads button{flex:1;min-width:140px}}
 .mo-rmc-edit{display:flex;gap:7px;align-items:center;justify-content:center}.mo-rmc-edit input{width:100px!important;text-align:center}.mo-rmc-edit button{border:0;background:#e8f1ed;border-radius:6px;padding:5px 7px;font-size:11px;font-weight:800}
-.mo-stack-item.wheat-stack{border-left:6px solid #2e8b57;background:#effaf2}.mo-stack-item.wheat-stack b{color:#167443}.mo-stack-item.rice-stack{border-left:6px solid #d98a18;background:#fff8e7}.mo-stack-item.rice-stack b{color:#a65b00}.mo-stack-item.wheat-stack button{background:#2e8b57;color:#fff}.mo-stack-item.rice-stack button{background:#d98a18;color:#fff}
+.mo-stack-item.wheat-stack{border:2px solid #2e8b57!important;border-left:7px solid #167443!important;background:#dff5e6!important;color:#145b36!important}.mo-stack-item.wheat-stack b{color:#0f6b3c}.mo-stack-item.rice-stack{border:2px solid #d98a18!important;border-left:7px solid #b66a00!important;background:#fff0c7!important;color:#7b4a00!important}.mo-stack-item.rice-stack b{color:#965600}.mo-stack-item.wheat-stack .mo-delete-btn{background:#2e8b57!important;color:#fff!important}.mo-stack-item.rice-stack .mo-delete-btn{background:#d98a18!important;color:#fff!important}
 .mo-pending-note{background:#fff7e3;border-left:4px solid #e39a18;border-radius:7px;padding:8px 10px;font-size:11px;margin-top:8px}
 .mo-status-card.mo-pending{animation:moBlink 1.25s infinite;}
 @keyframes moBlink{0%,100%{box-shadow:0 0 0 0 rgba(227,154,24,.08)}50%{box-shadow:0 0 0 5px rgba(227,154,24,.16)}}
@@ -396,12 +396,28 @@ body.page-open:not(.dashboard-open) #dashboardPage { display:none!important; }
 /* Home: one quick-folder row only; detailed overview remains below it. */
 body.dashboard-open .final-quick-row{display:none!important}
 /* Louder pending-work alert tone */
-</style>
+
+/* ===== FINAL MOISTURE POPUP + PIN KEYBOARD TUNE ===== */
+.mo-moisture-modal .modalbox{width:min(820px,100%);max-height:90vh;padding:18px}
+.mo-moisture-modal .mo-popup-highlight{padding:16px}
+.mo-moisture-modal .mo-popup-fields input{min-height:58px;font-size:21px}
+@media(max-width:560px){
+  #modal.mo-moisture-modal{align-items:flex-start!important;padding:28px 7px 12px!important}
+  #modal.mo-moisture-modal .modalbox{width:100%!important;max-height:calc(100dvh - 40px)!important;margin-top:0!important;padding:12px!important;border-radius:13px!important}
+  #modal.mo-moisture-modal .mo-popup-stack-grid>div{padding:8px 5px!important}
+  #modal.mo-moisture-modal .mo-popup-fields input{min-height:48px!important;padding:11px 8px!important;font-size:19px!important}
+}
+@media(max-height:520px) and (max-width:560px){
+  #modal.mo-moisture-modal{padding-top:16px!important}
+  #modal.mo-moisture-modal .modalbox{max-height:calc(100dvh - 24px)!important}
+}
+#sitePin{font-size:24px!important;letter-spacing:6px!important;text-align:center!important;-webkit-text-security:disc}
+
 </style>
 <script src="final_interaction_patch.js"></script>
 
 <style id="under-issue-select-final">
-.mo-select-btn{border:0;border-radius:6px;padding:4px 6px;background:#0a7a4b;color:#fff;font-weight:800;font-size:9px;line-height:1;cursor:pointer}.mo-select-btn:hover{background:#075d3b}
+.mo-select-btn{display:none!important}
 </style>
 </head>
 <body>
@@ -839,7 +855,7 @@ function renderMoistureStackStatus(){
   const store=moistureStore();
   const pending=[];
   active.forEach(r=>{const st=stack(r),rec=store[st];const entries=rec?.activities||rec?.truckEntries||rec?.entries||[];const hasEntry=entries.length>=1 && entries.some(e=>num(e.bags)>0);if(rec?.addedToMoisture||hasEntry)pending.push(r);});
-  const item=(r,cls,label)=>{const rice=isRice(r);const st=stack(r);const safe=String(st).replaceAll("\\","\\\\").replaceAll("'","\\'");return `<div class="mo-stack-item ${cls} ${rice?'rice-stack':'wheat-stack'}" role="button" tabindex="0" onclick="selectMoistureStack('${safe}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();selectMoistureStack('${safe}')}\"><span><b>${esc(st)}</b> · Shed ${esc(shed(r))} · <strong>${esc(commodity(r))}</strong></span><span class="mo-stack-actions"><button type="button" class="mo-select-btn" onclick="event.stopPropagation();selectMoistureStack('${safe}')">SELECT</button><button type="button" class="mo-delete-btn" onclick="event.stopPropagation();deleteMoistureStackWithPin('${safe}')">🗑 DELETE</button></span></div>`};
+  const item=(r,cls,label)=>{const rice=isRice(r);const st=stack(r);const safe=String(st).replaceAll("\\","\\\\").replaceAll("'","\\'");return `<div class="mo-stack-item ${cls} ${rice?'rice-stack':'wheat-stack'}" role="button" tabindex="0" onclick="selectMoistureStack('${safe}')" onkeydown="if(event.key==='Enter'||event.key===' '){event.preventDefault();selectMoistureStack('${safe}')}\"><span><b>${esc(st)}</b> · Shed ${esc(shed(r))} · <strong>${esc(commodity(r))}</strong></span><span class="mo-stack-actions"><button type="button" class="mo-delete-btn" onclick="event.stopPropagation();deleteMoistureStackWithPin('${safe}')">🗑 DELETE</button></span></div>`};
   box.innerHTML=`<div class="mo-status-card mo-pending"><div class="mo-status-head"><span>🟠 UNDER ISSUE STACK</span><span class="mo-status-count">${pending.length}</span></div><div class="smallmuted">Moisture issue wale stacks — Wheat aur Rice alag colour me</div><div class="mo-stack-list">${pending.length?pending.map(r=>item(r,'mo-pending','Pending')).join(''):'<div class="empty">No pending stack.</div>'}</div></div>`;
 }
 function selectMoistureStack(st){const key=String(st||'').trim();if(!key)return;const r=rows.find(x=>String(stack(x))===key);if(!r){alert('Selected stack Master Sheet me nahi mila.');return}localStorage.setItem('shambhuSelectedMoistureStack',key);const sel=$('mStack');if(sel)sel.value=key;loadMoistureStack();renderMoistureStackStatus();requestAnimationFrame(()=>{const target=document.querySelector('.saved-moisture-focus');if(target)target.scrollIntoView({behavior:'smooth',block:'start'});});}
@@ -1286,6 +1302,18 @@ document.addEventListener('DOMContentLoaded',function(){
     setTimeout(focusPin,120);
     setTimeout(focusPin,500);
   }
+});
+</script>
+
+<script>
+// Numeric PIN keyboard: tel/inputmode is mobile-friendly; typing is restricted to digits.
+document.addEventListener('DOMContentLoaded',function(){
+  const p=document.getElementById('sitePin');
+  if(!p)return;
+  p.type='tel'; p.setAttribute('inputmode','numeric'); p.setAttribute('pattern','[0-9]*'); p.setAttribute('enterkeyhint','done'); p.setAttribute('autocomplete','off');
+  p.addEventListener('input',function(){this.value=this.value.replace(/\D/g,'').slice(0,6);});
+  p.addEventListener('focus',function(){this.setSelectionRange(this.value.length,this.value.length);});
+  p.addEventListener('click',function(){this.focus();});
 });
 </script>
 </body></html>
